@@ -617,6 +617,60 @@ async def remove_favorite_quote(quote_id: str, current_user: User = Depends(get_
         )
     return {"message": "Favorite quote removed"}
 
+# Quote Management Routes
+@api_router.get("/quotes/favorites", response_model=List[QuoteFavorite])
+async def get_favorite_quotes(current_user: User = Depends(get_current_user)):
+    favorites = await db.quote_favorites.find({"user_id": current_user.id}).to_list(100)
+    return [QuoteFavorite(**fav) for fav in favorites]
+
+@api_router.post("/quotes/favorites", response_model=QuoteFavorite)
+async def save_favorite_quote(
+    quote: str, 
+    author: str, 
+    current_user: User = Depends(get_current_user)
+):
+    favorite = QuoteFavorite(
+        user_id=current_user.id,
+        quote=quote,
+        author=author
+    )
+    
+    await db.quote_favorites.insert_one(favorite.dict())
+    return favorite
+
+@api_router.delete("/quotes/favorites/{quote_id}")
+async def remove_favorite_quote(quote_id: str, current_user: User = Depends(get_current_user)):
+    result = await db.quote_favorites.delete_one({
+        "id": quote_id, 
+        "user_id": current_user.id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Favorite quote not found"
+        )
+    return {"message": "Favorite quote removed"}
+
+@api_router.delete("/quotes/favorites")
+async def remove_favorite_by_content(
+    quote: str,
+    author: str,
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.quote_favorites.delete_one({
+        "user_id": current_user.id,
+        "quote": quote,
+        "author": author
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Favorite quote not found"
+        )
+    return {"message": "Favorite quote removed"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
