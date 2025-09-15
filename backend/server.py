@@ -63,6 +63,9 @@ class Language(str, Enum):
     CHINESE = "zh"
     JAPANESE = "ja"
     KOREAN = "ko"
+    TURKISH = "tr"
+    TURKMEN = "tk"
+    AZERBAIJANI = "az"
 
 # Models
 class UserRegister(BaseModel):
